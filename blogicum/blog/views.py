@@ -1,10 +1,12 @@
-from django.views.generic import View, UpdateView, DetailView, ListView, CreateView
+from django.views.generic import View, UpdateView, DetailView, ListView, CreateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
+from .forms import PostForm
+
 
 from .models import Post, Category
 
@@ -89,5 +91,26 @@ class ProfileView(View):
         return render(request, 'blog/profile.html',
                       {'profile': profile, 'page_obj': page_obj})
 
-def create_post(request):
+class CreatePostView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/create.html'
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+class EditPostView(LoginRequiredMixin, UpdateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/create.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+class DeletePostView(LoginRequiredMixin, DeleteView):
+    model = Post
+
+
+class AddCommentView(LoginRequiredMixin, CreateView):
     pass

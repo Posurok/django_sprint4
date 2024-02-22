@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import truncatewords
 
@@ -20,6 +21,7 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
 
 
 class Category(BaseModel):
@@ -98,3 +100,7 @@ class Post(BaseModel):
 
     def __str__(self):
         return truncatewords(self.title, 15)
+
+    def get_absolute_url(self):
+        # С помощью функции reverse() возвращаем URL объекта.
+        return reverse('blog:post_detail', kwargs={'pk': self.pk})
