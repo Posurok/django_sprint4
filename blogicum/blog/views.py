@@ -5,10 +5,10 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
-from .forms import PostForm
+from .forms import PostForm, CommentForm
 
 
-from .models import Post, Category
+from .models import Post, Category, Comment
 
 POSTS_PER_PAGE = 10
 
@@ -39,6 +39,12 @@ class PostDetailView(BaseQueryMixin, DetailView):
 
     def get_queryset(self):
         return self.base_query()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = CommentForm()
+        context['comments'] = self.object.comment_set.all()
+        return context
 
 
 class CategoryPostsView(BaseQueryMixin, ListView):
@@ -113,4 +119,35 @@ class DeletePostView(LoginRequiredMixin, DeleteView):
 
 
 class AddCommentView(LoginRequiredMixin, CreateView):
-    pass
+    model = Comment
+    form_class = CommentForm
+    template_name = 'includes/comments.html'
+
+    def form_valid(self, form):
+        post = get_object_or_404(Post, pk=self.kwargs['pk'])
+        form.instance.post = post
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'pk': self.kwargs['pk']}
+        )
+
+class DeleteCommentView(LoginRequiredMixin, DeleteView):
+    model = Comment
+    template_name = 'blog/comment.html'
+
+    def get_success_url(self):
+        post = self.get_object().post
+        return reverse_lazy('blog:post_detail', kwargs={'pk': post.pk})
+
+class EditCommentView(LoginRequiredMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment.html'
+
+    def get_success_url(self):
+        post_pk = self.kwargs.get('post_pk')
+        return reverse_lazy('blog:post_detail', kwargs={'pk': post_pk})
