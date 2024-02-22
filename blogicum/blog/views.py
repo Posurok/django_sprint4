@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy, reverse
+from django.core.paginator import Paginator
 
 from .models import Post, Category
 
@@ -23,7 +24,6 @@ class BaseQueryMixin:
 class IndexView(BaseQueryMixin, ListView):
     model = Post
     template_name = 'blog/index.html'
-    context_object_name = 'page_obj'
     paginate_by = POSTS_PER_PAGE
 
     def get_queryset(self):
@@ -41,7 +41,6 @@ class PostDetailView(BaseQueryMixin, DetailView):
 
 class CategoryPostsView(BaseQueryMixin, ListView):
     template_name = 'blog/category.html'
-    context_object_name = 'page_obj'
     paginate_by = POSTS_PER_PAGE
 
     def get_queryset(self):
@@ -71,9 +70,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
 
-class ProfileView(BaseQueryMixin, View):
-    model = User
-    paginate_by = POSTS_PER_PAGE
+class ProfileView(View):
 
     def get(self, request, username=None):
         if username is None:
@@ -83,12 +80,14 @@ class ProfileView(BaseQueryMixin, View):
                 return redirect(reverse('login'))
 
         profile = get_object_or_404(User, username=username)
-        page_obj = self.base_query().filter(author__username=username)
-        return render(
-            request,
-            'blog/profile.html',
-            {'profile': profile, 'page_obj': page_obj}
-        )
+        posts_list = Post.objects.filter(author__username=username,
+                                         is_published=True)
+        paginator = Paginator(posts_list, POSTS_PER_PAGE)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, 'blog/profile.html',
+                      {'profile': profile, 'page_obj': page_obj})
 
 def create_post(request):
     pass
