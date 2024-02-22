@@ -104,3 +104,22 @@ class Post(BaseModel):
     def get_absolute_url(self):
         # С помощью функции reverse() возвращаем URL объекта.
         return reverse('blog:post_detail', kwargs={'pk': self.pk})
+
+
+class Comment(BaseModel):
+    text = models.TextField(verbose_name='Текст')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        verbose_name='Комментарий к посту'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
+    )
+
+    class Meta:
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
+        ordering = ('-created_at',)
