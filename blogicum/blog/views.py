@@ -1,8 +1,7 @@
+from django.views.generic import View, UpdateView, DetailView, ListView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from django.views.generic import View, UpdateView, DetailView, ListView, \
-    CreateView
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy, reverse
 
@@ -10,57 +9,57 @@ from .models import Post, Category
 
 POSTS_PER_PAGE = 10
 
-
-def base_query():
-    base_queryset = (
-        Post.objects.select_related('category', 'author', 'location')
-        .filter(
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=timezone.now()
+class BaseQueryMixin:
+    def base_query(self):
+        return (
+            Post.objects.select_related('category', 'author', 'location')
+            .filter(
+                is_published=True,
+                category__is_published=True,
+                pub_date__lte=timezone.now()
+            )
         )
-    )
 
-    return base_queryset
+class IndexView(BaseQueryMixin, ListView):
+    model = Post
+    template_name = 'blog/index.html'
+    context_object_name = 'page_obj'
+    paginate_by = POSTS_PER_PAGE
 
-
-def index(request):
-    post_list = base_query()[:POSTS_PER_PAGE]
-
-    context = {
-        'post_list': post_list,
-    }
-    return render(request, 'blog/index.html', context)
+    def get_queryset(self):
+        return self.base_query()
 
 
-def post_detail(request, post_id):
-    post_detail = get_object_or_404(base_query(), pk=post_id)
+class PostDetailView(BaseQueryMixin, DetailView):
+    model = Post
+    template_name = 'blog/detail.html'
+    context_object_name = 'post'
 
-    context = {'post': post_detail}
-    return render(request, 'blog/detail.html', context)
+    def get_queryset(self):
+        return self.base_query()
 
 
-def category_posts(request, category_slug):
-    category = get_object_or_404(
-        Category,
-        slug=category_slug,
-        is_published=True
-    )
-    post_list = base_query().filter(category__slug=category_slug)
-    context = {
-        'post_list': post_list,
-        'category': category
-    }
-    return render(request,
-                  'blog/category.html',
-                  context)
+class CategoryPostsView(BaseQueryMixin, ListView):
+    template_name = 'blog/category.html'
+    context_object_name = 'page_obj'
 
-def create_post(request):
-    pass
+    def get_queryset(self):
+        category_slug = self.kwargs.get('category_slug')
+        category = Category.objects.get(slug=category_slug)
+        return self.base_query().filter(category=category)
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category_slug = self.kwargs.get('category_slug')
+        category = Category.objects.get(slug=category_slug)
+        context['category'] = category
+        return context
+
 
 class EditProfileView(LoginRequiredMixin, UpdateView):
     model = User
-    fields = ['first_name', 'last_name']
+    fields = ['first_name', 'last_name', 'email']
     template_name = 'blog/user.html'
 
     def get_success_url(self):
@@ -71,9 +70,9 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
 
-
-class ProfileView(View):
+class ProfileView(BaseQueryMixin, View):
     model = User
+
     def get(self, request, username=None):
         if username is None:
             if request.user.is_authenticated:
@@ -82,9 +81,8 @@ class ProfileView(View):
                 return redirect(reverse('login'))
 
         profile = get_object_or_404(User, username=username)
-        page_obj = Post.objects.filter(
-            author__username=username,
-            is_published=True
+        page_obj = self.base_query().filter(
+            author__username=username
         )[:POSTS_PER_PAGE]
         return render(
             request,
@@ -92,3 +90,5 @@ class ProfileView(View):
             {'profile': profile, 'page_obj': page_obj}
         )
 
+def create_post(request):
+    pass
