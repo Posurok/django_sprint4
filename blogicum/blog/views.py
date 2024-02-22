@@ -42,6 +42,7 @@ class PostDetailView(BaseQueryMixin, DetailView):
 class CategoryPostsView(BaseQueryMixin, ListView):
     template_name = 'blog/category.html'
     context_object_name = 'page_obj'
+    paginate_by = POSTS_PER_PAGE
 
     def get_queryset(self):
         category_slug = self.kwargs.get('category_slug')
@@ -72,6 +73,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
 
 class ProfileView(BaseQueryMixin, View):
     model = User
+    paginate_by = POSTS_PER_PAGE
 
     def get(self, request, username=None):
         if username is None:
@@ -81,9 +83,7 @@ class ProfileView(BaseQueryMixin, View):
                 return redirect(reverse('login'))
 
         profile = get_object_or_404(User, username=username)
-        page_obj = self.base_query().filter(
-            author__username=username
-        )[:POSTS_PER_PAGE]
+        page_obj = self.base_query().filter(author__username=username)
         return render(
             request,
             'blog/profile.html',
