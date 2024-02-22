@@ -108,6 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGIN_REDIRECT_URL = 'blog:index'
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

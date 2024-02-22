@@ -56,7 +56,7 @@ class Location(BaseModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return truncatewords(self.title, 15)
+        return truncatewords(self.name, 15)
 
 
 class Post(BaseModel):

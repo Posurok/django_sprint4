@@ -1,9 +1,14 @@
-from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.views.generic import View, UpdateView, DetailView, ListView, \
+    CreateView
+from django.contrib.auth.models import User
+from django.urls import reverse_lazy, reverse
 
 from .models import Post, Category
 
-POSTS_PER_PAGE = 5
+POSTS_PER_PAGE = 10
 
 
 def base_query():
@@ -49,3 +54,41 @@ def category_posts(request, category_slug):
     return render(request,
                   'blog/category.html',
                   context)
+
+def create_post(request):
+    pass
+
+class EditProfileView(LoginRequiredMixin, UpdateView):
+    model = User
+    fields = ['first_name', 'last_name']
+    template_name = 'blog/user.html'
+
+    def get_success_url(self):
+        return reverse_lazy('blog:profile',
+                            kwargs={'username': self.request.user.username})
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+
+
+class ProfileView(View):
+    model = User
+    def get(self, request, username=None):
+        if username is None:
+            if request.user.is_authenticated:
+                username = request.user.username
+            else:
+                return redirect(reverse('login'))
+
+        profile = get_object_or_404(User, username=username)
+        page_obj = Post.objects.filter(
+            author__username=username,
+            is_published=True
+        )[:POSTS_PER_PAGE]
+        return render(
+            request,
+            'blog/profile.html',
+            {'profile': profile, 'page_obj': page_obj}
+        )
+
