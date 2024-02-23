@@ -67,7 +67,7 @@ class CategoryPostsView(BaseQueryMixin, ListView):
     def get_queryset(self):
         category_slug = self.kwargs.get('category_slug')
         category = Category.objects.get(slug=category_slug)
-        return self.base_query().filter(category=category)
+        return self.base_query().filter(category=category, is_published=True)
 
 
     def get_context_data(self, **kwargs):
