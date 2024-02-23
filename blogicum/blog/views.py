@@ -26,7 +26,8 @@ class BaseQueryMixin:
     def base_query(self):
         return (
             Post.objects.select_related('category', 'author', 'location')
-            .prefetch_related('comment_set').annotate(comment_count=Count('comment_set'))
+            .prefetch_related('comment_set')
+            .annotate(comment_count=Count('comment_set'))
             .filter(
                 is_published=True,
                 category__is_published=True,
@@ -145,13 +146,21 @@ class ProfileView(BaseQueryMixin, View):
                 return redirect(reverse('login'))
 
         profile = get_object_or_404(User, username=username)
-        posts_list = (
-            self.base_query().filter(
-            author__username=username,
-            is_published=True
-        ).prefetch_related('comment_set')
-        .annotate(comment_count=Count('comment_set'))
-        )
+        if request.user.username.lower() == username.lower():
+            posts_list = (
+                Post.objects.select_related('category', 'author', 'location')
+                .filter(author__username=username)
+                .prefetch_related('comment_set')
+                .annotate(comment_count=Count('comment_set'))
+                .order_by('-pub_date')
+            )
+        else:
+            posts_list = (
+                self.base_query().filter(
+                    author__username=username
+                )
+            )
+
         paginator = Paginator(posts_list, POSTS_PER_PAGE)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
