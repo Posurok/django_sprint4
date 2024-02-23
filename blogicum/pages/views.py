@@ -20,4 +20,4 @@ def page_500(request):
 
 
 def csrf_failure(request):
-    return render(request, 'pages/404.html', status=403)
+    return render(request, 'pages/403csrf.html', status=403)
