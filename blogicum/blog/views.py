@@ -6,21 +6,21 @@ from django.views.generic import (
     CreateView,
     DeleteView
 )
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.db.models import Count
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
 
+from .models import Post, Category, Comment
 from .forms import PostForm, CommentForm
 
 
-from .models import Post, Category, Comment
-
 POSTS_PER_PAGE = 10
+
 
 class BaseQueryMixin:
     def base_query(self):
@@ -68,7 +68,6 @@ class CategoryPostsView(BaseQueryMixin, ListView):
         category_slug = self.kwargs.get('category_slug')
         category = Category.objects.get(slug=category_slug)
         return self.base_query().filter(category=category, is_published=True)
-
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -186,6 +185,7 @@ class AddCommentView(LoginRequiredMixin, CreateView):
             kwargs={'pk': self.kwargs['pk']}
         )
 
+
 class DeleteCommentView(LoginRequiredMixin, DeleteView):
     model = Comment
     template_name = 'blog/comment.html'
@@ -193,6 +193,7 @@ class DeleteCommentView(LoginRequiredMixin, DeleteView):
     def get_success_url(self):
         post = self.get_object().post
         return reverse_lazy('blog:post_detail', kwargs={'pk': post.pk})
+
 
 class EditCommentView(LoginRequiredMixin, UpdateView):
     model = Comment

@@ -23,7 +23,6 @@ class BaseModel(models.Model):
         abstract = True
 
 
-
 class Category(BaseModel):
     title = models.CharField(
         max_length=TITLE_MAX_LENGTH,
@@ -118,7 +117,7 @@ class Comment(BaseModel):
         Post,
         on_delete=models.CASCADE,
         verbose_name='Комментарий к посту',
-        related_name = 'comment_set'
+        related_name='comment_set'
     )
     author = models.ForeignKey(
         User,
