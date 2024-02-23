@@ -68,6 +68,38 @@ class CategoryPostsView(BaseQueryMixin, ListView):
         return context
 
 
+class CreatePostView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/create.html'
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+class EditPostView(LoginRequiredMixin, UpdateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/create.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+
+class DeletePostView(LoginRequiredMixin, DeleteView):
+    model = Post
+    template_name = 'blog/create.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = {'instance': self.object}
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('blog:profile',
+                            kwargs={'username': self.request.user.username})
+
+
 class EditProfileView(LoginRequiredMixin, UpdateView):
     model = User
     fields = ['first_name', 'last_name', 'email']
@@ -92,7 +124,7 @@ class ProfileView(BaseQueryMixin, View):
 
         profile = get_object_or_404(User, username=username)
         posts_list = (
-            Post.objects.filter(
+            self.base_query().filter(
             author__username=username,
             is_published=True
         ).prefetch_related('comment_set')
@@ -104,26 +136,6 @@ class ProfileView(BaseQueryMixin, View):
 
         return render(request, 'blog/profile.html',
                       {'profile': profile, 'page_obj': page_obj})
-
-class CreatePostView(LoginRequiredMixin, CreateView):
-    model = Post
-    form_class = PostForm
-    template_name = 'blog/create.html'
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
-class EditPostView(LoginRequiredMixin, UpdateView):
-    model = Post
-    form_class = PostForm
-    template_name = 'blog/create.html'
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
-class DeletePostView(LoginRequiredMixin, DeleteView):
-    model = Post
 
 
 class AddCommentView(LoginRequiredMixin, CreateView):
