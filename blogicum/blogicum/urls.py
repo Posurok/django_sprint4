@@ -30,3 +30,7 @@ urlpatterns = [
     ),
          name='registration',),
 ]
+
+handler404 = 'pages.views.page_not_found'
+handler500 = 'pages.views.page_500'
+CSRF_FAILURE_VIEW = 'pages.views.csrf_failure'

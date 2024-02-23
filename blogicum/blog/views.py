@@ -13,6 +13,8 @@ from django.db.models import Count
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
+from django.core.mail import send_mail
+
 from .forms import PostForm, CommentForm
 
 
@@ -79,9 +81,22 @@ class CreatePostView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
+
+    def mail(self):
+        send_mail(
+            subject=f'New post added - {self.object.title}',
+            message=f'{self.object.author.username} add post!',
+            from_email='info@badger.com',
+            recipient_list=['badger@badger.com'],
+            fail_silently=True,
+        )
+
     def form_valid(self, form):
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        self.mail()
+        return response
+
 
 class EditPostView(LoginRequiredMixin, UpdateView):
     model = Post
