@@ -19,5 +19,5 @@ def page_500(request):
     return render(request, 'pages/500.html', status=500)
 
 
-def csrf_failure(request):
+def csrf_failure(request, reason=""):
     return render(request, 'pages/403csrf.html', status=403)
