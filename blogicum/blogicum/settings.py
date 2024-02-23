@@ -28,7 +28,7 @@ EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 SECRET_KEY = 'django-insecure-(vj0&^cd2k@*ww0*2waeyqf+)-k3!9p51i2mpvgkdkh6(b5%#i'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 

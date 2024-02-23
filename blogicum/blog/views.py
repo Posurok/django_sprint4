@@ -51,7 +51,18 @@ class PostDetailView(BaseQueryMixin, DetailView):
     context_object_name = 'post'
 
     def get_queryset(self):
-        return self.base_query()
+        queryset = self.model.objects.all()
+        obj = super().get_object(queryset)
+        if obj.author == self.request.user:
+            return (
+                Post.objects.select_related('category', 'author', 'location')
+                .filter(author__username=self.request.user.username)
+                .prefetch_related('comment_set')
+                .annotate(comment_count=Count('comment_set'))
+                .order_by('-pub_date')
+            )
+        else:
+            return self.base_query()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
