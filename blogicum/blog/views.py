@@ -109,7 +109,7 @@ class CreatePostView(LoginRequiredMixin, CreateView):
         return response
 
     def get_success_url(self):
-        return reverse_lazy('profile',
+        return reverse_lazy('blog:profile',
                             kwargs={'username': self.request.user.username})
 
 
