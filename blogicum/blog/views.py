@@ -20,7 +20,7 @@ from .forms import PostForm, CommentForm
 
 
 POSTS_PER_PAGE = 10
-
+1
 
 class BaseQueryMixin:
     def base_query(self):
