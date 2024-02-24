@@ -118,6 +118,14 @@ class EditPostView(LoginRequiredMixin, UpdateView):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
+    def dispatch(self, request, *args, **kwargs):
+        obj = get_object_or_404(Post, pk=kwargs['pk'])
+
+        if obj.author != self.request.user:
+            return redirect(obj.get_absolute_url())
+
+        return super().dispatch(request, *args, **kwargs)
+
 
 class DeletePostView(LoginRequiredMixin, DeleteView):
     model = Post
@@ -131,6 +139,14 @@ class DeletePostView(LoginRequiredMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy('blog:profile',
                             kwargs={'username': self.request.user.username})
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = get_object_or_404(Post, pk=kwargs['pk'])
+
+        if obj.author != self.request.user:
+            return redirect(obj.get_absolute_url())
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 class EditProfileView(LoginRequiredMixin, UpdateView):
@@ -205,6 +221,14 @@ class DeleteCommentView(LoginRequiredMixin, DeleteView):
         post = self.get_object().post
         return reverse_lazy('blog:post_detail', kwargs={'pk': post.pk})
 
+    def dispatch(self, request, *args, **kwargs):
+        obj = get_object_or_404(Comment, pk=kwargs['pk'])
+
+        if obj.author != self.request.user:
+            return redirect(obj.post.get_absolute_url())
+
+        return super().dispatch(request, *args, **kwargs)
+
 
 class EditCommentView(LoginRequiredMixin, UpdateView):
     model = Comment
@@ -214,3 +238,11 @@ class EditCommentView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         post_pk = self.kwargs.get('post_pk')
         return reverse_lazy('blog:post_detail', kwargs={'pk': post_pk})
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = get_object_or_404(Comment, pk=kwargs['pk'])
+
+        if obj.author != self.request.user:
+            return redirect(obj.post.get_absolute_url())
+
+        return super().dispatch(request, *args, **kwargs)
