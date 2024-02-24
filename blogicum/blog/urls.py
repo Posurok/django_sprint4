@@ -18,14 +18,14 @@ urlpatterns = [
         views.CategoryPostsView.as_view(),
         name='category_posts'
     ),
-    path('create_post/', views.CreatePostView.as_view(), name='create_post'),
+    path('posts/create/', views.CreatePostView.as_view(), name='create_post'),
     path(
-        'edit_post/<int:pk>/',
+        'posts/edit/<int:pk>/',
         views.EditPostView.as_view(),
         name='edit_post'
     ),
     path(
-        'delete_post/<int:pk>/delete/',
+        'posts/delete/<int:pk>/delete/',
         views.DeletePostView.as_view(),
         name='delete_post'
     ),
