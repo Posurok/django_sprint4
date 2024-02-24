@@ -20,12 +20,12 @@ urlpatterns = [
     ),
     path('posts/create/', views.CreatePostView.as_view(), name='create_post'),
     path(
-        'posts/edit/<int:pk>/',
+        'posts/<int:pk>/edit/',
         views.EditPostView.as_view(),
         name='edit_post'
     ),
     path(
-        'posts/delete/<int:pk>/delete/',
+        'posts/<int:pk>/delete/',
         views.DeletePostView.as_view(),
         name='delete_post'
     ),
