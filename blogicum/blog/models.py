@@ -1,10 +1,11 @@
-from django.db import models
-from django.urls import reverse
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.template.defaultfilters import truncatewords
+from django.urls import reverse
 
-TITLE_MAX_LENGTH = 256
 
+TITLE_MAX_LENGTH = settings.TITLE_MAX_LENGTH
 User = get_user_model()
 
 

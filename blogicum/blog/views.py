@@ -1,25 +1,47 @@
-from django.views.generic import (
-    View,
-    UpdateView,
-    DetailView,
-    ListView,
-    CreateView,
-    DeleteView
-)
-from django.utils import timezone
-from django.db.models import Count
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse_lazy, reverse
-from django.core.paginator import Paginator
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
+from django.db.models import Count
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.urls import reverse_lazy, reverse
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    DeleteView,
+    ListView,
+    View,
+    UpdateView
+)
 
-from .models import Post, Category, Comment
-from .forms import PostForm, CommentForm
+from .models import Category, Comment, Post
+from .forms import CommentForm, PostForm
+
+POSTS_PER_PAGE = settings.POSTS_PER_PAGE
+SERVICE_EMAIL = settings.SERVICE_EMAIL
 
 
-POSTS_PER_PAGE = 10
+class CommentMixin:
+    model = Comment
+    template_name = 'blog/comment.html'
+
+    def get_success_url(self):
+        post_id = self.kwargs['post_pk']
+        return reverse_lazy('blog:post_detail', kwargs={'pk': post_id})
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = get_object_or_404(
+            Comment,
+            pk=kwargs['pk'],
+            post=kwargs['post_pk']
+        )
+
+        if obj.author != self.request.user:
+            return redirect(obj.post.get_absolute_url())
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 class BaseQueryMixin:
@@ -57,7 +79,6 @@ class PostDetailView(BaseQueryMixin, DetailView):
             return (
                 Post.objects.select_related('category', 'author', 'location')
                 .filter(author__username=self.request.user.username)
-                .prefetch_related('comment_set')
                 .annotate(comment_count=Count('comment_set'))
                 .order_by('-pub_date')
             )
@@ -105,7 +126,7 @@ class CreatePostView(LoginRequiredMixin, CreateView):
         send_mail(
             subject=f'New post added - {self.object.title}',
             message=f'{self.object.author.username} add post!',
-            from_email='info@badger.com',
+            from_email=SERVICE_EMAIL,
             recipient_list=['badger@badger.com'],
             fail_silently=True,
         )
@@ -225,36 +246,8 @@ class AddCommentView(LoginRequiredMixin, CreateView):
         )
 
 
-class DeleteCommentView(LoginRequiredMixin, DeleteView):
-    model = Comment
-    template_name = 'blog/comment.html'
+class DeleteCommentView(CommentMixin, LoginRequiredMixin, DeleteView):
+    pass
 
-    def get_success_url(self):
-        post = self.get_object().post
-        return reverse_lazy('blog:post_detail', kwargs={'pk': post.pk})
-
-    def dispatch(self, request, *args, **kwargs):
-        obj = get_object_or_404(Comment, pk=kwargs['pk'])
-
-        if obj.author != self.request.user:
-            return redirect(obj.post.get_absolute_url())
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class EditCommentView(LoginRequiredMixin, UpdateView):
-    model = Comment
+class EditCommentView(CommentMixin, LoginRequiredMixin, UpdateView):
     form_class = CommentForm
-    template_name = 'blog/comment.html'
-
-    def get_success_url(self):
-        post_pk = self.kwargs.get('post_pk')
-        return reverse_lazy('blog:post_detail', kwargs={'pk': post_pk})
-
-    def dispatch(self, request, *args, **kwargs):
-        obj = get_object_or_404(Comment, pk=kwargs['pk'])
-
-        if obj.author != self.request.user:
-            return redirect(obj.post.get_absolute_url())
-
-        return super().dispatch(request, *args, **kwargs)
