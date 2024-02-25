@@ -17,31 +17,11 @@ from django.views.generic import (
 )
 
 from .models import Category, Comment, Post
+from .mixins import CommentMixin, PostMixin
 from .forms import CommentForm, PostForm
 
 POSTS_PER_PAGE = settings.POSTS_PER_PAGE
 SERVICE_EMAIL = settings.SERVICE_EMAIL
-
-
-class CommentMixin:
-    model = Comment
-    template_name = 'blog/comment.html'
-
-    def get_success_url(self):
-        post_id = self.kwargs['post_pk']
-        return reverse_lazy('blog:post_detail', kwargs={'pk': post_id})
-
-    def dispatch(self, request, *args, **kwargs):
-        obj = get_object_or_404(
-            Comment,
-            pk=kwargs['pk'],
-            post=kwargs['post_pk']
-        )
-
-        if obj.author != self.request.user:
-            return redirect(obj.post.get_absolute_url())
-
-        return super().dispatch(request, *args, **kwargs)
 
 
 class BaseQueryMixin:
@@ -142,27 +122,15 @@ class CreatePostView(LoginRequiredMixin, CreateView):
                             kwargs={'username': self.request.user.username})
 
 
-class EditPostView(LoginRequiredMixin, UpdateView):
-    model = Post
+class EditPostView(LoginRequiredMixin, PostMixin, UpdateView):
     form_class = PostForm
-    template_name = 'blog/create.html'
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
-    def dispatch(self, request, *args, **kwargs):
-        obj = get_object_or_404(Post, pk=kwargs['pk'])
 
-        if obj.author != self.request.user:
-            return redirect(obj.get_absolute_url())
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class DeletePostView(LoginRequiredMixin, DeleteView):
-    model = Post
-    template_name = 'blog/create.html'
+class DeletePostView(LoginRequiredMixin, PostMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -172,14 +140,6 @@ class DeletePostView(LoginRequiredMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy('blog:profile',
                             kwargs={'username': self.request.user.username})
-
-    def dispatch(self, request, *args, **kwargs):
-        obj = get_object_or_404(Post, pk=kwargs['pk'])
-
-        if obj.author != self.request.user:
-            return redirect(obj.get_absolute_url())
-
-        return super().dispatch(request, *args, **kwargs)
 
 
 class EditProfileView(LoginRequiredMixin, UpdateView):
