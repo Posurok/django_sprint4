@@ -15,6 +15,7 @@ from pathlib import Path
 POSTS_PER_PAGE = 10
 TITLE_MAX_LENGTH = 256
 SERVICE_EMAIL = 'info@badger.com'
+LOGIN_URL = 'login'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
