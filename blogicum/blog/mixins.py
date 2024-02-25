@@ -12,7 +12,7 @@ class PostMixin:
         obj = get_object_or_404(Post, pk=kwargs['pk'])
 
         if obj.author != self.request.user:
-            return redirect(obj.get_absolute_url())
+            return redirect(reverse('login'))
 
         return super().dispatch(request, *args, **kwargs)
 
