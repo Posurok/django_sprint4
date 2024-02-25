@@ -205,7 +205,7 @@ class ProfileView(BaseQueryMixin, View):
                 return redirect(reverse('login'))
 
         profile = get_object_or_404(User, username=username)
-        if request.user.username.lower() == username.lower():
+        if request.user == profile:
             posts_list = (
                 Post.objects.select_related('category', 'author', 'location')
                 .filter(author__username=username)
