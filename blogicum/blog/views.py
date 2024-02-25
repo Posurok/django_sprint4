@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
@@ -12,7 +12,6 @@ from django.views.generic import (
     DetailView,
     DeleteView,
     ListView,
-    View,
     UpdateView
 )
 
@@ -76,24 +75,20 @@ class CategoryPostsView(BaseQueryMixin, ListView):
     template_name = 'blog/category.html'
     paginate_by = POSTS_PER_PAGE
 
-    def get_queryset(self):
+    def get_category(self):
         category_slug = self.kwargs.get('category_slug')
-        category = get_object_or_404(
+        return get_object_or_404(
             Category,
             slug=category_slug,
             is_published=True
         )
-        return self.base_query().filter(category=category)
+
+    def get_queryset(self):
+        return self.base_query().filter(category=self.get_category())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        category_slug = self.kwargs.get('category_slug')
-        category = get_object_or_404(
-            Category,
-            slug=category_slug,
-            is_published=True
-        )
-        context['category'] = category
+        context['category'] = self.get_category()
         return context
 
 
@@ -155,15 +150,9 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
 
-class ProfileView(BaseQueryMixin, View):
+class ProfileView(BaseQueryMixin, ListView):
 
     def get(self, request, username=None):
-        if username is None:
-            if request.user.is_authenticated:
-                username = request.user.username
-            else:
-                return redirect(reverse('login'))
-
         profile = get_object_or_404(User, username=username)
         if request.user == profile:
             posts_list = (
