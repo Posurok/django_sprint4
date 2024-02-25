@@ -11,8 +11,11 @@ class PostMixin:
     def dispatch(self, request, *args, **kwargs):
         obj = get_object_or_404(Post, pk=kwargs['pk'])
 
-        if obj.author != self.request.user:
+        if not request.user.is_authenticated:
             return redirect(reverse('login'))
+
+        if obj.author != self.request.user:
+            return redirect(obj.get_absolute_url())
 
         return super().dispatch(request, *args, **kwargs)
 
