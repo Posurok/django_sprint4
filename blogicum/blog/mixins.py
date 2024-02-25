@@ -17,7 +17,6 @@ class PostMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
-
 class CommentMixin:
     model = Comment
     template_name = 'blog/comment.html'

@@ -198,5 +198,6 @@ class AddCommentView(LoginRequiredMixin, CreateView):
 class DeleteCommentView(CommentMixin, LoginRequiredMixin, DeleteView):
     pass
 
+
 class EditCommentView(CommentMixin, LoginRequiredMixin, UpdateView):
     form_class = CommentForm
