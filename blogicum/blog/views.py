@@ -117,7 +117,7 @@ class CreatePostView(LoginRequiredMixin, CreateView):
                             kwargs={'username': self.request.user.username})
 
 
-class EditPostView(LoginRequiredMixin, PostMixin, UpdateView):
+class EditPostView(PostMixin, UpdateView):
     form_class = PostForm
 
     def form_valid(self, form):
@@ -125,7 +125,7 @@ class EditPostView(LoginRequiredMixin, PostMixin, UpdateView):
         return super().form_valid(form)
 
 
-class DeletePostView(LoginRequiredMixin, PostMixin, DeleteView):
+class DeletePostView(PostMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -195,9 +195,9 @@ class AddCommentView(LoginRequiredMixin, CreateView):
         )
 
 
-class DeleteCommentView(CommentMixin, LoginRequiredMixin, DeleteView):
+class DeleteCommentView(CommentMixin, DeleteView):
     pass
 
 
-class EditCommentView(CommentMixin, LoginRequiredMixin, UpdateView):
+class EditCommentView(CommentMixin, UpdateView):
     form_class = CommentForm
