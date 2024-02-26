@@ -66,7 +66,9 @@ class PostDetailView(DetailView):
         obj = super().get_object(queryset)
         if obj.author == self.request.user:
             return get_posts_queryset(
-                manager=self.model.objects.filter(author__username=self.request.user.username),
+                manager=self.model.objects.filter(
+                    author__username=self.request.user.username
+                ),
                 apply_filters=False,
                 apply_annotations=False
             )
@@ -186,8 +188,7 @@ class AddCommentView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
     template_name = 'includes/comments.html'
-    pk_url_kwarg='comment_id'
-
+    pk_url_kwarg = 'comment_id'
 
     def form_valid(self, form):
         post = get_object_or_404(Post, pk=self.kwargs['comment_id'])

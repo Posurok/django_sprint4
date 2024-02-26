@@ -36,12 +36,18 @@ urlpatterns = [
     ),
     path(
         'posts/<int:post_id>/delete_comment/<int:comment_id>/',
-        views.DeleteCommentView.as_view(pk_url_kwarg='comment_id', post_pk_url_kwarg='post_id'),
+        views.DeleteCommentView.as_view(
+            pk_url_kwarg='comment_id',
+            post_pk_url_kwarg='post_id'
+        ),
         name='delete_comment'
     ),
     path(
         'posts/<int:post_id>/edit_comment/<int:comment_id>/',
-        views.EditCommentView.as_view(pk_url_kwarg='comment_id', post_pk_url_kwarg='post_id'),
+        views.EditCommentView.as_view(
+            pk_url_kwarg='comment_id',
+            post_pk_url_kwarg='post_id'
+        ),
         name='edit_comment'
     ),
     path(
