@@ -109,7 +109,7 @@ class Post(BaseModel):
 
     def get_absolute_url(self):
         # С помощью функции reverse() возвращаем URL объекта.
-        return reverse('blog:post_detail', kwargs={'pk': self.pk})
+        return reverse('blog:post_detail', kwargs={'post_id': self.pk})
 
 
 class Comment(BaseModel):

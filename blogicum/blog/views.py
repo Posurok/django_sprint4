@@ -181,9 +181,11 @@ class AddCommentView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
     template_name = 'includes/comments.html'
+    pk_url_kwarg='comment_id'
+
 
     def form_valid(self, form):
-        post = get_object_or_404(Post, pk=self.kwargs['pk'])
+        post = get_object_or_404(Post, pk=self.kwargs['comment_id'])
         form.instance.post = post
         form.instance.author = self.request.user
         return super().form_valid(form)
@@ -191,7 +193,7 @@ class AddCommentView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse(
             'blog:post_detail',
-            kwargs={'pk': self.kwargs['pk']}
+            kwargs={'post_id': self.kwargs['comment_id']}
         )
 
 

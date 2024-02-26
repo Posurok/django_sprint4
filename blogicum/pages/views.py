@@ -1,5 +1,7 @@
+from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import render
-from django.views.generic import TemplateView
+from django.views.generic import CreateView, TemplateView
+from django.urls import reverse_lazy
 
 
 class About(TemplateView):
@@ -8,6 +10,12 @@ class About(TemplateView):
 
 class Rules(TemplateView):
     template_name = 'pages/rules.html'
+
+
+class RegistrationView(CreateView):
+    template_name = 'registration/registration_form.html'
+    form_class = UserCreationForm
+    success_url = reverse_lazy('login')
 
 
 def page_not_found(request, exception):
