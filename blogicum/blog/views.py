@@ -12,6 +12,7 @@ from django.views.generic import (
     DetailView,
     DeleteView,
     ListView,
+    View,
     UpdateView
 )
 
@@ -23,30 +24,29 @@ POSTS_PER_PAGE = settings.POSTS_PER_PAGE
 SERVICE_EMAIL = settings.SERVICE_EMAIL
 
 
-class BaseQueryMixin:
-    def base_query(self):
-        return (
-            Post.objects.select_related('category', 'author', 'location')
-            .prefetch_related('comment_set')
-            .annotate(comment_count=Count('comment_set'))
-            .filter(
-                is_published=True,
-                category__is_published=True,
-                pub_date__lte=timezone.now()
-            ).order_by('-pub_date')
-        )
+def base_query():
+    return (
+        Post.objects.select_related('category', 'author', 'location')
+        .prefetch_related('comment_set')
+        .annotate(comment_count=Count('comment_set'))
+        .filter(
+            is_published=True,
+            category__is_published=True,
+            pub_date__lte=timezone.now()
+        ).order_by('-pub_date')
+    )
 
 
-class IndexView(BaseQueryMixin, ListView):
+class IndexView(ListView):
     model = Post
     template_name = 'blog/index.html'
     paginate_by = POSTS_PER_PAGE
 
     def get_queryset(self):
-        return self.base_query()
+        return base_query()
 
 
-class PostDetailView(BaseQueryMixin, DetailView):
+class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
     context_object_name = 'post'
@@ -62,7 +62,7 @@ class PostDetailView(BaseQueryMixin, DetailView):
                 .order_by('-pub_date')
             )
         else:
-            return self.base_query()
+            return base_query()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -71,7 +71,7 @@ class PostDetailView(BaseQueryMixin, DetailView):
         return context
 
 
-class CategoryPostsView(BaseQueryMixin, ListView):
+class CategoryPostsView(ListView):
     template_name = 'blog/category.html'
     paginate_by = POSTS_PER_PAGE
 
@@ -84,7 +84,7 @@ class CategoryPostsView(BaseQueryMixin, ListView):
         )
 
     def get_queryset(self):
-        return self.base_query().filter(category=self.get_category())
+        return base_query().filter(category=self.get_category())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -139,7 +139,7 @@ class DeletePostView(PostMixin, DeleteView):
 
 class EditProfileView(LoginRequiredMixin, UpdateView):
     model = User
-    fields = ['first_name', 'last_name', 'email']
+    fields = ('first_name', 'last_name', 'email', 'username')
     template_name = 'blog/user.html'
 
     def get_success_url(self):
@@ -150,7 +150,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
 
-class ProfileView(BaseQueryMixin, ListView):
+class ProfileView(View):
 
     def get(self, request, username=None):
         profile = get_object_or_404(User, username=username)
@@ -164,7 +164,7 @@ class ProfileView(BaseQueryMixin, ListView):
             )
         else:
             posts_list = (
-                self.base_query().filter(
+                base_query().filter(
                     author__username=username
                 )
             )
