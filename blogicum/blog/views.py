@@ -24,17 +24,27 @@ POSTS_PER_PAGE = settings.POSTS_PER_PAGE
 SERVICE_EMAIL = settings.SERVICE_EMAIL
 
 
-def base_query():
-    return (
-        Post.objects.select_related('category', 'author', 'location')
+def get_posts_queryset(
+        manager=Post.objects,
+        apply_filters=True,
+        apply_annotations=True
+):
+
+    queryset = (
+        manager.select_related('category', 'author', 'location')
         .prefetch_related('comment_set')
-        .annotate(comment_count=Count('comment_set'))
-        .filter(
+    )
+
+    if apply_filters:
+        queryset = queryset.filter(
             is_published=True,
             category__is_published=True,
             pub_date__lte=timezone.now()
-        ).order_by('-pub_date')
-    )
+        )
+
+    if apply_annotations:
+        queryset = queryset.annotate(comment_count=Count('comment_set'))
+    return queryset.order_by('-pub_date')
 
 
 class IndexView(ListView):
@@ -43,7 +53,7 @@ class IndexView(ListView):
     paginate_by = POSTS_PER_PAGE
 
     def get_queryset(self):
-        return base_query()
+        return get_posts_queryset()
 
 
 class PostDetailView(DetailView):
@@ -55,14 +65,13 @@ class PostDetailView(DetailView):
         queryset = self.model.objects.all()
         obj = super().get_object(queryset)
         if obj.author == self.request.user:
-            return (
-                Post.objects.select_related('category', 'author', 'location')
-                .filter(author__username=self.request.user.username)
-                .annotate(comment_count=Count('comment_set'))
-                .order_by('-pub_date')
+            return get_posts_queryset(
+                manager=self.model.objects.filter(author__username=self.request.user.username),
+                apply_filters=False,
+                apply_annotations=False
             )
         else:
-            return base_query()
+            return get_posts_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -84,7 +93,7 @@ class CategoryPostsView(ListView):
         )
 
     def get_queryset(self):
-        return base_query().filter(category=self.get_category())
+        return get_posts_queryset().filter(category=self.get_category())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -155,18 +164,14 @@ class ProfileView(View):
     def get(self, request, username=None):
         profile = get_object_or_404(User, username=username)
         if request.user == profile:
-            posts_list = (
-                Post.objects.select_related('category', 'author', 'location')
-                .filter(author__username=username)
-                .prefetch_related('comment_set')
-                .annotate(comment_count=Count('comment_set'))
-                .order_by('-pub_date')
+            posts_list = get_posts_queryset(
+                manager=Post.objects.filter(author__username=username),
+                apply_filters=False
             )
         else:
             posts_list = (
-                base_query().filter(
-                    author__username=username
-                )
+                get_posts_queryset()
+                .filter(author__username=username)
             )
 
         paginator = Paginator(posts_list, POSTS_PER_PAGE)
