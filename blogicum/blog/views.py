@@ -68,8 +68,7 @@ class PostDetailView(DetailView):
         obj = super().get_object(queryset)
 
         if obj.author != self.request.user:
-            obj = get_posts_queryset(
-                manager=self.request.user.posts.filter(id=obj.id)).first()
+            obj = queryset.filter(id=obj.id).first()
             if obj is None:
                 raise Http404
 
