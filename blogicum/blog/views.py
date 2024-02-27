@@ -95,7 +95,7 @@ class CategoryPostsView(ListView):
         )
 
     def get_queryset(self):
-        return get_posts_queryset().filter(category=self.get_category())
+        return get_posts_queryset(manager=self.get_category().posts)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -167,12 +167,12 @@ class ProfileView(View):
         profile = get_object_or_404(User, username=username)
         if request.user == profile:
             posts_list = get_posts_queryset(
-                manager=profile.posts.all(),
+                manager=profile.posts,
                 apply_filters=False
             )
         else:
             posts_list = get_posts_queryset(
-                manager=profile.posts.all()
+                manager=profile.posts
             )
 
         paginator = Paginator(posts_list, POSTS_PER_PAGE)
