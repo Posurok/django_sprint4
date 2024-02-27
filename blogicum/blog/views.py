@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.urls import reverse_lazy, reverse
@@ -48,7 +49,6 @@ def get_posts_queryset(
 
 
 class IndexView(ListView):
-    model = Post
     template_name = 'blog/index.html'
     paginate_by = POSTS_PER_PAGE
 
@@ -61,19 +61,19 @@ class PostDetailView(DetailView):
     template_name = 'blog/detail.html'
     context_object_name = 'post'
 
-    def get_queryset(self):
-        queryset = self.model.objects.all()
+    def get_object(self, queryset=None):
+        if queryset is None:
+            queryset = super().get_queryset()
+
         obj = super().get_object(queryset)
-        if obj.author == self.request.user:
-            return get_posts_queryset(
-                manager=self.model.objects.filter(
-                    author__username=self.request.user.username
-                ),
-                apply_filters=False,
-                apply_annotations=False
-            )
-        else:
-            return get_posts_queryset()
+
+        if obj.author != self.request.user:
+            obj = get_posts_queryset(
+                manager=self.request.user.posts.filter(id=obj.id)).first()
+            if obj is None:
+                raise Http404
+
+        return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -167,13 +167,12 @@ class ProfileView(View):
         profile = get_object_or_404(User, username=username)
         if request.user == profile:
             posts_list = get_posts_queryset(
-                manager=Post.objects.filter(author__username=username),
+                manager=profile.posts.all(),
                 apply_filters=False
             )
         else:
-            posts_list = (
-                get_posts_queryset()
-                .filter(author__username=username)
+            posts_list = get_posts_queryset(
+                manager=profile.posts.all()
             )
 
         paginator = Paginator(posts_list, POSTS_PER_PAGE)
