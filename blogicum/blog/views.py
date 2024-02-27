@@ -67,10 +67,12 @@ class PostDetailView(DetailView):
 
         obj = super().get_object(queryset)
 
-        if obj.author != self.request.user:
-            obj = queryset.filter(id=obj.id).first()
-            if obj is None:
-                raise Http404
+        if obj.author != self.request.user and (
+                not obj.is_published or
+                not obj.category.is_published or
+                obj.pub_date > timezone.now()
+        ):
+            raise Http404
 
         return obj
 
